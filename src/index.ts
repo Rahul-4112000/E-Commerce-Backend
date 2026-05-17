@@ -9,7 +9,7 @@ const PORT = process.env.PORT || 3001;
 
 connectToDB().then(()=> {
     const server = app.listen(PORT,() => {
-        console.log(`Somehting is cooking very hot: ${PORT}`)
+        console.log(`Somehting is cooking very hot at: ${PORT}`)
     })
     server.on('error',(error)=> {
         console.error(`server failed to run: ${error}`)

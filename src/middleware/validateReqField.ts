@@ -1,11 +1,9 @@
 import { NextFunction, Request, Response } from "express";
-import { AnyZodObject, ZodError } from "zod/v3";
+import { ZodError, ZodObject } from "zod";
 
 const validate =
-  (schema: AnyZodObject) =>
+  (schema: ZodObject) =>
   async (req: Request, res: Response, next: NextFunction) => {
-
-
     try {
       await schema.parseAsync({
         body: req.body,
@@ -14,19 +12,17 @@ const validate =
     } catch (err) {
       let errors;
       if (err instanceof ZodError) {
-        
-       errors = err.issues.map((issue) => ({
-        fieldName: issue.path[1],
-        message: issue.message,
-       }))
+        errors = err.issues.map((issue) => ({
+          fieldName: issue.path[1],
+          message: issue.message,
+        }));
       }
       res.status(400).json({
         success: false,
-        message: 'validation failed',
-        errors: errors
-      })
+        message: "validation failed",
+        errors: errors,
+      });
     }
-
   };
 
 export { validate };

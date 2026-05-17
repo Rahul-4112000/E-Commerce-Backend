@@ -1,23 +1,5 @@
-import { email } from "zod";
-import { z } from "zod/v3";
-
-const emailSchema = z.object({
-  email: z.string().email("invalid email"),
-});
-
-const passwordSchema = z.object({
-  password: z
-    .string()
-    .min(5, "Password must be at least 5 characters")
-    .max(20, "Password cannot exceed 20 characters"),
-});
-
-const confirmPasswordSchema = z.object({
-  confirmPassword: z
-    .string()
-    .min(5, "Password must be at least 5 characters")
-    .max(20, "Password cannot exceed 20 characters"),
-});
+import z from "zod";
+import { emailSchema, passwordSchema } from "./utility.validation";
 
 export const loginSchema = z.object({
   body: z.object({
@@ -28,6 +10,17 @@ export const loginSchema = z.object({
 
 export const registerSchema = z.object({
   body: loginSchema.extend({
-    confirmPassword: confirmPasswordSchema,
+    confirmPassword: passwordSchema,
   }),
 });
+
+
+const adminRegisterSchema = z.object({
+  body: z.object({
+    password: passwordSchema,
+    confirmPassword: passwordSchema
+  })
+})
+
+
+export { adminRegisterSchema }

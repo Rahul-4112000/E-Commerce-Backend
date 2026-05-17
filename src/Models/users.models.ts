@@ -7,12 +7,13 @@ export interface IUser extends Document {
   name: string;
   email: string;
   password: string;
-  isActive: string;
-  lastLogin: string;
+  isActive: boolean;
+  lastLogin: Date;
+  refreshToken: string;
   role: "admin" | "super_admin" | "user";
   isPasswordCorrect(password: string): Promise<boolean>;
-  generateAccessToken(): void;
-  generateRefreshToken(): void;
+  generateAccessToken(): string;
+  generateRefreshToken(): string;
 }
 
 const userSchema = new Schema(
@@ -42,7 +43,7 @@ const userSchema = new Schema(
       default: true,
     },
     lastLogin: {
-      type: String,
+      type: Date,
     },
   },
   { timestamps: true },
@@ -56,7 +57,7 @@ userSchema.pre("save", async function (this: IUser) {
 userSchema.methods.generateAccessToken = function () {
   return Jwt.sign(
     {
-      id: this._id,
+      _id: this._id,
       name: this.name,
       email: this.email,
     },
@@ -68,7 +69,7 @@ userSchema.methods.generateAccessToken = function () {
 userSchema.methods.generateRefreshToken = function () {
   return Jwt.sign(
     {
-      id: this._id,
+      _id: this._id,
     },
     process.env.REFRESH_TOKEN_SECRET!,
     { expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN as any },
