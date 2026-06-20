@@ -8,7 +8,7 @@ connectToDB().then(async () => {
 
   await User.create({
     name: "Rahul",
-    email: "rahul69@gmail.com",
+    email: "rahul@gmail.com",
     password: "rahul@121",
     role: "super_admin",
   });

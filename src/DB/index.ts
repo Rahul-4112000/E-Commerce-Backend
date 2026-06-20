@@ -3,9 +3,11 @@ import { DATABASE_NAME } from '../shared/constant';
 
 export const connectToDB = async () => {
  try {
-    await mongoose.connect(`${process.env.DATABASE_URL}/${DATABASE_NAME}`);
+    const mongoDBURI = `${process.env.DATABASE_URL}/${DATABASE_NAME}`;
+    await mongoose.connect(mongoDBURI);
+
     console.log("Connected to DB successfully!");
- } catch(error) {
+   } catch(error) {
     console.log(error);
  }
 }
