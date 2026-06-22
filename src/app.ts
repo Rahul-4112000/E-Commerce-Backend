@@ -17,7 +17,7 @@ app.use(cookieParser());
 
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/super-admin", superAdminRouter);
-app.use("/api/v1/admin",adminRouter)
+app.use("/api/v1/admin", adminRouter)
 
 app.use((err: any, req: Request, res: Response, next: NextFunction) => {
   const status = err.status || 500;

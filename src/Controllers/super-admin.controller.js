@@ -3,6 +3,7 @@ import { sendMail } from "../shared/services/mail.service";
 import { validateInvite } from "../utils/inviteValidation";
 import { createAdmin } from "../Repository/invite.repository";
 import { User } from "../Models/users.models";
+import { ApiError } from "../utils/apiError";
 
 const inviteAdmin = async (req, res) => {
   const { email } = req.body;
@@ -18,8 +19,8 @@ const inviteAdmin = async (req, res) => {
     await sendMail(email, inviteToken);
 
     return res.status(201).json({
-        status: 201,
-      success: true, 
+      status: 201,
+      success: true,
       message: "invited successfully",
     });
   } catch (error) {
@@ -29,7 +30,7 @@ const inviteAdmin = async (req, res) => {
   }
 };
 
-const validateInviteToken = async (req, repository) => {
+const validateInviteToken = async (req, res) => {
   const { inviteToken } = req.body
 
   const admin = await validateInvite(inviteToken);
@@ -43,36 +44,45 @@ const validateInviteToken = async (req, repository) => {
 
 const getAdmins = async (req, res) => {
 
-  const adminList = await User.find({role: "admin"}).select("-password -refreshToken");
+  const adminList = await User.find({ role: "admin" }).select("-password -refreshToken");
 
-  if(!adminList){
+  if (!adminList) {
     throw Error('Not able to fetch admins');
   }
 
-  if(!adminList.length){
+  if (!adminList.length) {
     return res.status(404).json({
-      message: 'admin not found'
+      admin: [],
+      adminCount: 0
     })
   }
 
   return res.status(200).json({
-    adminList: adminList,
-    adminCount: adminList.length
+    admin: adminList,
+    count: adminList.length
   })
 }
 
 const changeAdminStatus = async (req, res) => {
-  const adminId = req.params.id;
+  const adminId = req.body.id;
   const isActive = req.body.isActive;
 
-  const user = await User.findByIdAndUpdate(adminId,{isActive: !isActive});
-
-  if(!user){
-    throw Error("Can't update status");
+  if (typeof isActive !== "boolean") {
+    throw new ApiError(401, 'status should be boolean only')
   }
 
+  const user = await User.findByIdAndUpdate(adminId, { isActive });
+
+  if (!user) {
+    throw new Error('something went wrong!');
+  }
   return res.status(201).json({
-    message: "status changed successfully"
+    success: true,
+    message: `User ${isActive ? "activated" : "deactivated"} successfully.`,
+    data: {
+      _id: user._id,
+      isActive: user.isActive
+    }
   })
 }
 
