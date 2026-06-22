@@ -14,13 +14,11 @@ export const registerSchema = z.object({
   }),
 });
 
-
 const adminRegisterSchema = z.object({
   body: z.object({
     password: passwordSchema,
     confirmPassword: passwordSchema
   })
 })
-
 
 export { adminRegisterSchema }

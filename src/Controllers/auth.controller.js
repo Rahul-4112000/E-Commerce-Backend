@@ -1,22 +1,11 @@
-import { Request, Response } from 'express';
 import { ApiError } from '../utils/apiError';
 import { User } from '../Models/users.models';
-import { createUser } from '../Repository/user.repository';
+import { createUser, logoutUser } from '../Repository/user.repository';
 import { validateInvite } from '../utils/inviteValidation';
+import { COOKIE_OPTION } from '../shared/constant';
 
-type loginUserType = {
-  email: string;
-  password: string;
-};
-
-type registerAdminType = {
-  password: string;
-  confirmPassword: string;
-  inviteToken: string;
-};
-
-const loginUser = async (req: Request, res: Response) => {
-  const { email, password } = req.body as loginUserType;
+const loginUser = async (req, res) => {
+  const { email, password } = req.body
 
   const user = await User.findOne({ email: email });
 
@@ -49,16 +38,8 @@ const loginUser = async (req: Request, res: Response) => {
   const { password: _, refreshToken: __, ...userWithoutSensitiveField } = user.toObject();
   return res
     .status(200)
-    .cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-    })
-    .cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: false,
-      sameSite: 'lax',
-    })
+    .cookie('accessToken', accessToken, COOKIE_OPTION)
+    .cookie('refreshToken', refreshToken, COOKIE_OPTION)
     .json({
       success: true,
       message: 'User Login Successfully',
@@ -67,8 +48,8 @@ const loginUser = async (req: Request, res: Response) => {
     });
 };
 
-const registerAdmin = async (req: Request, res: Response) => {
-  const { password, confirmPassword, inviteToken } = req.body as registerAdminType;
+const registerAdmin = async (req, res) => {
+  const { password, confirmPassword, inviteToken } = req.body;
 
   if (password !== confirmPassword) {
     throw new ApiError(400, "password doesn't match");
@@ -87,17 +68,45 @@ const registerAdmin = async (req: Request, res: Response) => {
   const accessToken = user.generateAccessToken();
   const refreshToken = user.generateRefreshToken();
 
-  const option = {
-    httpOnly: true,
-    secure: true,
-  };
-
   return res
     .status(200)
-    .cookie('accessToken', accessToken, option)
-    .cookie('refershToken', refreshToken, option)
+    .cookie('accessToken', accessToken, COOKIE_OPTION)
+    .cookie('refershToken', refreshToken, COOKIE_OPTION)
     .json({ success: true, message: 'User Register sucessfully', user });
 };
+
+const logout = async (req, res) => {
+  const userId = req.user._id;
+
+  const existingUser = await User.findById(userId).select('refreshToken');
+
+  if (!existingUser) {
+    throw new ApiError(404, 'User not found');
+  }
+
+  const isAlreadyLoggedOut = !existingUser.refreshToken;
+
+  if (isAlreadyLoggedOut) {
+    return res.status(400).json({
+      success: false,
+      message: 'User is already logged out',
+    });
+  }
+
+  const user = await logoutUser(userId);
+
+  if (!user) {
+    throw new ApiError(500, 'something went wrong');
+  }
+
+  res.clearCookie('accessToken', COOKIE_OPTION);
+  res.clearCookie('refreshToken', COOKIE_OPTION);
+
+  return res.status(200).json({
+    success: true,
+    message: 'User Logout Successfully',
+  });
+}
 
 // const registerUser = async (req: Request, res: Response) => {
 //   const { email, password, confirmPassword } = req.body as registerUser;
@@ -126,4 +135,4 @@ const registerAdmin = async (req: Request, res: Response) => {
 //     .json({ success: true, message: "User Register sucessfully", user });
 // };
 
-export { loginUser, registerAdmin };
+export { loginUser, registerAdmin, logout };

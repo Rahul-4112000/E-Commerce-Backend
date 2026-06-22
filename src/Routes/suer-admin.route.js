@@ -9,7 +9,7 @@ const superAdminRouter = Router();
 
 superAdminRouter.route('/admin').get(authentication, authorizationSuperAdmin, getAdmins);
 
-superAdminRouter.route('/admin/status').post(changeAdminStatus)
+superAdminRouter.route('/admin/status').post(authentication, authorizationSuperAdmin, changeAdminStatus)
 
 superAdminRouter
   .route('/invite')

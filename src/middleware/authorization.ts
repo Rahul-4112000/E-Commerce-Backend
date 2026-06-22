@@ -16,7 +16,5 @@ export const authorizationSuperAdmin = (
     });
   }
 
-  console.log('authorization passed')
-
   return next();
 };

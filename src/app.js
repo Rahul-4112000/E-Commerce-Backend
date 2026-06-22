@@ -1,10 +1,11 @@
-import express, { NextFunction, Request, Response } from "express";
+import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import userRouter from "./Routes/user.route";
 import dotenv from "dotenv";
 import superAdminRouter from "./Routes/suer-admin.route";
 import adminRouter from "./Routes/admin.route";
+import authRouter from "./Routes/auth.route";
+import userRouter from "./Routes/user.route";
 dotenv.config();
 
 const app = express();
@@ -15,11 +16,12 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.static("public"));
 app.use(cookieParser());
 
-app.use("/api/v1/user", userRouter);
+app.use("/api/v1/auth", authRouter);
 app.use("/api/v1/super-admin", superAdminRouter);
 app.use("/api/v1/admin", adminRouter)
+app.use("/api/v1/user", userRouter)
 
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err, req, res, next) => {
   const status = err.status || 500;
   const message = err.message;
 

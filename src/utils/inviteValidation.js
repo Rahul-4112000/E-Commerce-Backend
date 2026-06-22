@@ -1,7 +1,7 @@
 import { findAdminByToken } from "../Repository/invite.repository";
 import { ApiError } from "./apiError";
 
-export const validateInvite = async (inviteToken: string) => {
+export const validateInvite = async (inviteToken) => {
   if (!inviteToken) {
     throw new ApiError(400, "token is required");
   }

@@ -1,15 +1,15 @@
 import { invite } from "../Models/invite.models";
 
-export const findAdminByToken = async (inviteToken: string) => {
+export const findAdminByToken = async (inviteToken) => {
   return await invite.findOne({
     inviteToken,
   });
 };
 
 export const createAdmin = async (
-  email: string,
-  inviteToken: string,
-  expiresAt: Date,
+  email,
+  inviteToken,
+  expiresAt,
 ) => {
   return await invite.create({
     email,

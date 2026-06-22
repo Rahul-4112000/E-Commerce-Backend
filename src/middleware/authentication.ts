@@ -50,7 +50,6 @@ export const authentication = async (req: Request, res: Response, next:NextFunct
 
     req.user = user;
 
-    console.log('authentication passed')
 
     return next()
   } catch (error) {

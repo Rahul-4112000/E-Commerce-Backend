@@ -1,1 +1,6 @@
-export const DATABASE_NAME = 'ECommerce'
+export const DATABASE_NAME = 'ECommerce';
+
+export const COOKIE_OPTION = {
+    httpOnly: true,
+    secure: true,
+};
