@@ -5,6 +5,7 @@ import { createAdmin } from "../Repository/invite.repository";
 import { User } from "../Models/users.models";
 import { ApiError } from "../utils/apiError";
 import { searchSchema } from "../validation/common.validation";
+import { quotelessJson } from "zod/v3";
 
 const inviteAdmin = async (req, res) => {
   const { email } = req.body;
@@ -88,9 +89,9 @@ const changeAdminStatus = async (req, res) => {
 }
 
 const searchAdmin = async (req, res) => {
-  const { searchTerm } = req.query;
+  const { q } = req.query;
 
-  const result = searchSchema.safeParse({ searchTerm });
+  const result = searchSchema.safeParse({ searchTerm: q });
 
   if (!result.success) {
     const error = result.error.issues.map((issue) => ({
@@ -107,23 +108,18 @@ const searchAdmin = async (req, res) => {
 
   let users = [];
 
-  if (searchTerm === "") {
-    users = await User.find({
-      role: 'admin'
-    })
-  } else {
-    users = await User.find({
+  users = await User.find(
+    q ? {
       role: 'admin',
       $or: [
-        { name: { $regex: searchTerm, $options: "i" } },
-        { email: { $regex: searchTerm, $options: "i" } }
+        { name: { $regex: q, $options: "i" } },
+        { email: { $regex: q, $options: "i" } }
       ]
-    })
-  }
+    } : { role: 'admin' })
 
   return res.status(200).json({
-    success: true,
-    data: users
+    count: users.length,
+    admin: users
   })
 
 }
