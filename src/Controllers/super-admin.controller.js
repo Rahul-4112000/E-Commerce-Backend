@@ -107,14 +107,18 @@ const searchAdmin = async (req, res) => {
 
   let users = [];
 
-  users = await User.find(
-    q ? {
-      role: 'admin',
-      $or: [
-        { name: { $regex: q, $options: "i" } },
-        { email: { $regex: q, $options: "i" } }
-      ]
-    } : { role: 'admin' })
+  const filter = {
+    role: 'admin'
+  }
+
+  if (q) {
+    filter.$or = [
+      { name: { $regex: q, $options: "i" } },
+      { email: { $regex: q, $options: "i" } }
+    ]
+  }
+
+  users = await User.find(filter)
 
   return res.status(200).json({
     count: users.length,
