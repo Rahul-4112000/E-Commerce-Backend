@@ -4,6 +4,7 @@ import { validateInvite } from "../utils/inviteValidation";
 import { createAdmin } from "../Repository/invite.repository";
 import { User } from "../Models/users.models";
 import { ApiError } from "../utils/apiError";
+import { searchSchema } from "../validation/common.validation";
 
 const inviteAdmin = async (req, res) => {
   const { email } = req.body;
@@ -86,4 +87,45 @@ const changeAdminStatus = async (req, res) => {
   })
 }
 
-export { inviteAdmin, validateInviteToken, getAdmins, changeAdminStatus };
+const searchAdmin = async (req, res) => {
+  const { searchTerm } = req.query;
+
+  const result = searchSchema.safeParse({ searchTerm });
+
+  if (!result.success) {
+    const error = result.error.issues.map((issue) => ({
+      field: issue.path.join("."),
+      message: issue.message
+    }));
+
+    return res.status(400).json({
+      success: false,
+      message: "validation failed",
+      error: error
+    })
+  }
+
+  let users = [];
+
+  if (searchTerm === "") {
+    users = await User.find({
+      role: 'admin'
+    })
+  } else {
+    users = await User.find({
+      role: 'admin',
+      $or: [
+        { name: { $regex: searchTerm, $options: "i" } },
+        { email: { $regex: searchTerm, $options: "i" } }
+      ]
+    })
+  }
+
+  return res.status(200).json({
+    success: true,
+    data: users
+  })
+
+}
+
+export { inviteAdmin, validateInviteToken, getAdmins, changeAdminStatus, searchAdmin };

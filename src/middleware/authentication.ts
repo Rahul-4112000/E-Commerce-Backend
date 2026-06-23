@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { JwtPayload } from "jsonwebtoken";
 import { User } from "../Models/users.models";
-import  Jwt  from "jsonwebtoken";
+import Jwt from "jsonwebtoken";
 
 
 interface DecodedToken extends JwtPayload {
@@ -10,8 +10,7 @@ interface DecodedToken extends JwtPayload {
   email: string;
 }
 
-
-export const authentication = async (req: Request, res: Response, next:NextFunction) => {
+export const authentication = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const accessToken = req.cookies.accessToken;
 

@@ -29,6 +29,7 @@ const userSchema = new Schema(
     password: {
       type: String,
       required: [true, "password is required"],
+      select: false
     },
     refreshToken: {
       type: String,
@@ -46,7 +47,7 @@ const userSchema = new Schema(
       type: Date,
     },
   },
-  { timestamps: true },
+  { timestamps: true, versionKey: false }
 );
 
 userSchema.pre("save", async function (this: IUser) {
