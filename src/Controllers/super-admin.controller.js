@@ -5,7 +5,6 @@ import { createAdmin } from "../Repository/invite.repository";
 import { User } from "../Models/users.models";
 import { ApiError } from "../utils/apiError";
 import { searchSchema } from "../validation/common.validation";
-import { quotelessJson } from "zod/v3";
 
 const inviteAdmin = async (req, res) => {
   const { email } = req.body;
