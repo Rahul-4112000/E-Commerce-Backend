@@ -1,16 +1,12 @@
-import { NextFunction, Request, Response } from "express";
-import { EROLE_TYPE } from "../shared/types";
+import { NextFunction, Request, Response } from 'express';
+import { ROLE_TYPE } from '../shared/types';
 
-export const authorizationSuperAdmin = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
+export const authorizationSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
   const user = req.user;
 
-  if (!user || user.role !== EROLE_TYPE.SUPER_ADMIN) {
+  if (!user || user.role !== ROLE_TYPE.SUPER_ADMIN) {
     return res.status(403).json({
-      message: "Unauthorized",
+      message: 'Unauthorized',
       status: 403,
       success: false,
     });

@@ -1,16 +1,19 @@
-import crypto from "crypto";
-import { sendMail } from "../shared/services/mail.service";
-import { validateInvite } from "../utils/inviteValidation";
-import { createAdmin } from "../Repository/invite.repository";
-import { User } from "../Models/users.models";
-import { ApiError } from "../utils/apiError";
-import { searchSchema } from "../validation/common.validation";
+import crypto from 'crypto';
+import { sendMail } from '../shared/services/mail.service';
+import { validateInvite } from '../utils/inviteValidation';
+import { createAdmin } from '../Repository/invite.repository';
+import { User } from '../Models/users.models';
+import { ApiError } from '../utils/apiError';
+import { ROLE_TYPE } from '../shared/types';
+import { ApiResponse } from '../utils/apiResponse';
+import { mapAdminListToClient } from '../mapper/admin.mapper';
+import { buildPaginationMetaData } from '../utils/util';
 
 const inviteAdmin = async (req, res) => {
   const { email } = req.body;
 
   try {
-    const inviteToken = crypto.randomBytes(32).toString("hex");
+    const inviteToken = crypto.randomBytes(32).toString('hex');
     const today = new Date();
     const tommorrowTimeStamp = today.setDate(today.getDate() + 1);
     const expiryTommorrow = new Date(tommorrowTimeStamp);
@@ -22,109 +25,72 @@ const inviteAdmin = async (req, res) => {
     return res.status(201).json({
       status: 201,
       success: true,
-      message: "invited successfully",
+      message: 'invited successfully',
     });
   } catch (error) {
     return res.status(400).json({
-      message: "something went wrong",
+      message: 'something went wrong',
     });
   }
 };
 
 const validateInviteToken = async (req, res) => {
-  const { inviteToken } = req.body
+  const { inviteToken } = req.body;
 
   const admin = await validateInvite(inviteToken);
 
   return res.status(200).json({
     success: true,
     message: 'token is valid',
-    user: admin
-  })
+    user: admin,
+  });
 };
 
 const getAdmins = async (req, res) => {
+  const { search, page = 1, limit = 2 } = req.query;
+  const query = { role: ROLE_TYPE.ADMIN };
 
-  const adminList = await User.find({ role: "admin" }).select("-password -refreshToken");
+  const parsedLimit = parseInt(limit);
+  const parsedPage = parseInt(page);
+  const offset = (parsedPage - 1) * parsedLimit;
 
-  if (!adminList) {
-    throw Error('Not able to fetch admins');
+  if (search) {
+    const searchRegex = new RegExp(search, 'i');
+    query.$or = [{ name: searchRegex }, { email: searchRegex }];
   }
 
-  if (!adminList.length) {
-    return res.status(404).json({
-      admin: [],
-      adminCount: 0
-    })
-  }
+  const [adminList, itemCount] = await Promise.all([User.find(query).skip(offset).limit(parsedLimit).lean(), User.countDocuments(query)]);
 
-  return res.status(200).json({
-    admin: adminList,
-    count: adminList.length
-  })
-}
+  return res.status(200).json(
+    new ApiResponse(
+      'Admins fetched successfully',
+      mapAdminListToClient(adminList),
+      buildPaginationMetaData({ page, limit, itemCount })
+    ),
+  );
+};
 
 const changeAdminStatus = async (req, res) => {
   const adminId = req.body.id;
   const isActive = req.body.isActive;
 
-  if (typeof isActive !== "boolean") {
-    throw new ApiError(401, 'status should be boolean only')
+  if (typeof isActive !== 'boolean') {
+    throw new ApiError(401, 'status should be boolean only');
   }
 
   const user = await User.findByIdAndUpdate(adminId, { isActive });
 
   if (!user) {
-    throw new Error('something went wrong!');
+    throw new ApiError(404, 'User not found!!');
   }
   return res.status(201).json({
     success: true,
-    message: `User ${isActive ? "activated" : "deactivated"} successfully.`,
+    message: `User ${isActive ? 'activated' : 'deactivated'} successfully.`,
     data: {
-      _id: user._id,
-      isActive: user.isActive
-    }
-  })
-}
+      id: user._id,
+      isActive: user.isActive,
+    },
+  });
+};
 
-const searchAdmin = async (req, res) => {
-  const { q } = req.query;
-
-  const result = searchSchema.safeParse({ searchTerm: q });
-
-  if (!result.success) {
-    const error = result.error.issues.map((issue) => ({
-      field: issue.path.join("."),
-      message: issue.message
-    }));
-
-    return res.status(400).json({
-      success: false,
-      message: "validation failed",
-      error: error
-    })
-  }
-
-  let users = [];
-
-  const filter = {
-    role: 'admin'
-  }
-
-  if (q) {
-    filter.$or = [
-      { name: { $regex: q, $options: "i" } },
-      { email: { $regex: q, $options: "i" } }
-    ]
-  }
-
-  users = await User.find(filter)
-
-  return res.status(200).json({
-    count: users.length,
-    admin: users
-  })
-
-}
-
-export { inviteAdmin, validateInviteToken, getAdmins, changeAdminStatus, searchAdmin };
+export { inviteAdmin, validateInviteToken, getAdmins, changeAdminStatus };

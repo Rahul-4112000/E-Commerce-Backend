@@ -1,7 +1,7 @@
-import mongoose, { Schema, Document } from "mongoose";
-import { compare } from "bcrypt-ts";
-import Jwt from "jsonwebtoken";
-import { hash } from "bcrypt-ts";
+import mongoose, { Schema, Document } from 'mongoose';
+import { compare } from 'bcrypt-ts';
+import Jwt from 'jsonwebtoken';
+import { hash } from 'bcrypt-ts';
 
 export interface IUser extends Document {
   name: string;
@@ -10,7 +10,7 @@ export interface IUser extends Document {
   isActive: boolean;
   lastLogin: Date;
   refreshToken: string;
-  role: "admin" | "super_admin" | "user";
+  role: 'admin' | 'super_admin' | 'user';
   isPasswordCorrect(password: string): Promise<boolean>;
   generateAccessToken(): string;
   generateRefreshToken(): string;
@@ -24,20 +24,21 @@ const userSchema = new Schema(
     email: {
       type: String,
       unique: true,
-      required: [true, "email is required"],
+      required: [true, 'email is required'],
     },
     password: {
       type: String,
-      required: [true, "password is required"],
-      select: false
+      required: [true, 'password is required'],
+      select: false,
     },
     refreshToken: {
       type: String,
+      select: false,
     },
     role: {
       type: String,
-      enum: ["admin", "user", "super_admin"],
-      default: "user",
+      enum: ['admin', 'user', 'super_admin'],
+      default: 'user',
     },
     isActive: {
       type: Boolean,
@@ -47,11 +48,11 @@ const userSchema = new Schema(
       type: Date,
     },
   },
-  { timestamps: true, versionKey: false }
+  { timestamps: true, versionKey: false },
 );
 
-userSchema.pre("save", async function (this: IUser) {
-  if (!this.isModified("password")) return;
+userSchema.pre('save', async function (this: IUser) {
+  if (!this.isModified('password')) return;
   this.password = await hash(this.password, 10);
 });
 
@@ -77,11 +78,8 @@ userSchema.methods.generateRefreshToken = function () {
   );
 };
 
-userSchema.methods.isPasswordCorrect = async function (
-  this: IUser,
-  password: string,
-) {
+userSchema.methods.isPasswordCorrect = async function (this: IUser, password: string) {
   return await compare(password, this.password);
 };
 
-export const User = mongoose.model<IUser>("users", userSchema);
+export const User = mongoose.model<IUser>('users', userSchema);

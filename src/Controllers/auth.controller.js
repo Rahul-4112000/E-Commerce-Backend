@@ -3,6 +3,8 @@ import { User } from '../Models/users.models';
 import { createUser, logoutUser } from '../Repository/user.repository';
 import { validateInvite } from '../utils/inviteValidation';
 import { COOKIE_OPTION } from '../shared/constant';
+import { mapAuthUserToClient } from '../mapper/auth.mapper';
+import { ApiResponse } from '../utils/apiResponse';
 
 const loginUser = async (req, res) => {
   const { email, password } = req.body
@@ -108,31 +110,10 @@ const logout = async (req, res) => {
   });
 }
 
-// const registerUser = async (req: Request, res: Response) => {
-//   const { email, password, confirmPassword } = req.body as registerUser;
+const getUserProfile = (req, res) => {
+  const user = mapAuthUserToClient(req.user);
 
-//   if (password !== confirmPassword) {
-//     throw new ApiError(400, "Password does't match");
-//   }
+  return res.status(200).json(new ApiResponse('fetched user profile successfully', { user }))
+}
 
-//   const user = await User.create({
-//     email,
-//     password,
-//   });
-
-//   const accessToken = user.generateAccessToken();
-//   const refreshToken = user.generateRefreshToken();
-
-//   const option = {
-//     httpOnly: true,
-//     secure: true,
-//   };
-
-//   return res
-//     .status(200)
-//     .cookie("accessToken", accessToken, option)
-//     .cookie("refershToken", refreshToken, option)
-//     .json({ success: true, message: "User Register sucessfully", user });
-// };
-
-export { loginUser, registerAdmin, logout };
+export { loginUser, registerAdmin, logout, getUserProfile };
