@@ -1,10 +1,23 @@
 import { Router } from 'express';
 import { validate } from '../middleware/validateReqField';
-import { adminRegisterSchema, registerSchema } from '../validation/auth.validation';
-import { registerAdmin } from '../Controllers/auth.controller';
+import { adminRegisterSchema } from '../validation/auth.validation';
+import { authentication } from '../middleware/authentication';
+import { authorizationSuperAdmin } from '../middleware/authorization';
+import { acceptAdminInvitation, getAdmins, inviteAdmin, updateAdmin, validateInviteToken } from '../Controllers/admin.controller';
+import { invitationSchema } from '../validation/super-admin.validation';
 
 const adminRouter = Router();
 
-adminRouter.route('/register').post(validate(adminRegisterSchema), registerAdmin);
+adminRouter
+  .route('/invitations')
+  .post(validate(invitationSchema), authentication, authorizationSuperAdmin, inviteAdmin);
+
+adminRouter.route('/invitations/accept').post(validate(adminRegisterSchema), acceptAdminInvitation);
+
+adminRouter.route('/invitations/:token').get(validateInviteToken);
+
+adminRouter.route('/').get(authentication, authorizationSuperAdmin, getAdmins);
+
+adminRouter.route('/:adminId').post(authentication, authorizationSuperAdmin, updateAdmin)
 
 export default adminRouter;

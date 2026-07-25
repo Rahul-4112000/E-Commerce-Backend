@@ -1,7 +1,6 @@
 import { ApiError } from '../utils/apiError';
 import { User } from '../Models/users.models';
-import { createUser, logoutUser } from '../Repository/user.repository';
-import { validateInvite } from '../utils/inviteValidation';
+import { logoutUser } from '../Repository/user.repository';
 import { COOKIE_OPTION } from '../shared/constant';
 import { mapAuthUserToClient } from '../mapper/auth.mapper';
 import { ApiResponse } from '../utils/apiResponse';
@@ -50,33 +49,6 @@ const loginUser = async (req, res) => {
     });
 };
 
-const registerAdmin = async (req, res) => {
-  const { password, confirmPassword, inviteToken } = req.body;
-
-  if (password !== confirmPassword) {
-    throw new ApiError(400, "password doesn't match");
-  }
-
-  const admin = await validateInvite(inviteToken);
-
-  admin.isUsed = true;
-
-  await admin.save({
-    validateBeforeSave: false,
-  });
-
-  const user = await createUser({ email: admin.email || '', password, role: 'admin', isActive: true });
-
-  const accessToken = user.generateAccessToken();
-  const refreshToken = user.generateRefreshToken();
-
-  return res
-    .status(200)
-    .cookie('accessToken', accessToken, COOKIE_OPTION)
-    .cookie('refershToken', refreshToken, COOKIE_OPTION)
-    .json({ success: true, message: 'User Register sucessfully', user });
-};
-
 const logout = async (req, res) => {
   const userId = req.user._id;
 
@@ -116,4 +88,4 @@ const getUserProfile = (req, res) => {
   return res.status(200).json(new ApiResponse('fetched user profile successfully', { user }))
 }
 
-export { loginUser, registerAdmin, logout, getUserProfile };
+export { loginUser, logout, getUserProfile };

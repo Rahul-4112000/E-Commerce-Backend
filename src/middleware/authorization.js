@@ -1,7 +1,6 @@
-import { NextFunction, Request, Response } from 'express';
 import { ROLE_TYPE } from '../shared/types';
 
-export const authorizationSuperAdmin = (req: Request, res: Response, next: NextFunction) => {
+export const authorizationSuperAdmin = (req, res, next) => {
   const user = req.user;
 
   if (!user || user.role !== ROLE_TYPE.SUPER_ADMIN) {

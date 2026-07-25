@@ -1,15 +1,7 @@
-import { NextFunction, Request, Response } from 'express';
-import { JwtPayload } from 'jsonwebtoken';
-import { User } from '../Models/users.models';
 import Jwt from 'jsonwebtoken';
+import { User } from '../Models/users.models';
 
-interface DecodedToken extends JwtPayload {
-  _id: string;
-  name: string;
-  email: string;
-}
-
-export const authentication = async (req: Request, res: Response, next: NextFunction) => {
+export const authentication = async (req, res, next) => {
   try {
     const accessToken = req.cookies.accessToken;
 
@@ -21,7 +13,7 @@ export const authentication = async (req: Request, res: Response, next: NextFunc
       });
     }
 
-    const decodeToken = Jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET!) as DecodedToken;
+    const decodeToken = Jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
 
     if (!decodeToken) {
       return res.status(401).json({

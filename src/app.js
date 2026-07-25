@@ -2,7 +2,6 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
-import superAdminRouter from "./Routes/suer-admin.route";
 import adminRouter from "./Routes/admin.route";
 import authRouter from "./Routes/auth.route";
 import { requestLogger } from "./middleware/requestLogger.js";
@@ -17,9 +16,8 @@ app.use(express.static("public"));
 app.use(cookieParser());
 app.use(requestLogger)
 
-app.use("/api/v1/auth", authRouter);
-app.use("/api/v1/super-admin", superAdminRouter);
-app.use("/api/v1/admin", adminRouter)
+app.use("/api/auth", authRouter);
+app.use("/api/admins", adminRouter)
 
 app.use((err, req, res, next) => {
   const status = err.status || 500;

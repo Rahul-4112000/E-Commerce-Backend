@@ -8,6 +8,7 @@ import { ROLE_TYPE } from '../shared/types';
 import { ApiResponse } from '../utils/apiResponse';
 import { mapAdminListToClient } from '../mapper/admin.mapper';
 import { buildPaginationMetaData } from '../utils/util';
+import { COOKIE_OPTION } from '../shared/constant';
 
 const inviteAdmin = async (req, res) => {
   const { email } = req.body;
@@ -35,7 +36,7 @@ const inviteAdmin = async (req, res) => {
 };
 
 const validateInviteToken = async (req, res) => {
-  const { inviteToken } = req.body;
+  const { inviteToken } = req.params;
 
   const admin = await validateInvite(inviteToken);
 
@@ -70,8 +71,8 @@ const getAdmins = async (req, res) => {
   );
 };
 
-const changeAdminStatus = async (req, res) => {
-  const adminId = req.body.id;
+const updateAdmin = async (req, res) => {
+  const adminId = req.body.adminId;
   const isActive = req.body.isActive;
 
   if (typeof isActive !== 'boolean') {
@@ -93,4 +94,31 @@ const changeAdminStatus = async (req, res) => {
   });
 };
 
-export { inviteAdmin, validateInviteToken, getAdmins, changeAdminStatus };
+const acceptAdminInvitation = async (req, res) => {
+  const { password, confirmPassword, inviteToken } = req.body;
+
+  if (password !== confirmPassword) {
+    throw new ApiError(400, "password doesn't match");
+  }
+
+  const admin = await validateInvite(inviteToken);
+
+  admin.isUsed = true;
+
+  await admin.save({
+    validateBeforeSave: false,
+  });
+
+  const user = await User.createUser({ email: admin.email || '', password, role: 'admin', isActive: true });
+
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
+
+  return res
+    .status(200)
+    .cookie('accessToken', accessToken, COOKIE_OPTION)
+    .cookie('refershToken', refreshToken, COOKIE_OPTION)
+    .json({ success: true, message: 'User Register sucessfully', user });
+};
+
+export { inviteAdmin, validateInviteToken, acceptAdminInvitation, getAdmins, updateAdmin };

@@ -10,6 +10,6 @@ authRouter.route("/login").post(validate(loginSchema), loginUser);
 
 authRouter.route("/logout").post(authentication, logout);
 
-authRouter.route('/profile').get(authentication, getUserProfile)
+authRouter.route('/me').get(authentication, getUserProfile)
 
 export default authRouter;
