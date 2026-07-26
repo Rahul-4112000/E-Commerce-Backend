@@ -1,7 +1,7 @@
 import crypto from 'crypto';
 import { sendMail } from '../shared/services/mail.service';
 import { validateInvite } from '../utils/inviteValidation';
-import { createAdmin } from '../Repository/invite.repository';
+import { createInvite } from '../Repository/invite.repository';
 import { User } from '../Models/users.models';
 import { ApiError } from '../utils/apiError';
 import { ROLE_TYPE } from '../shared/types';
@@ -13,26 +13,20 @@ import { COOKIE_OPTION } from '../shared/constant';
 const inviteAdmin = async (req, res) => {
   const { email } = req.body;
 
-  try {
-    const inviteToken = crypto.randomBytes(32).toString('hex');
-    const today = new Date();
-    const tommorrowTimeStamp = today.setDate(today.getDate() + 1);
-    const expiryTommorrow = new Date(tommorrowTimeStamp);
+  const inviteToken = crypto.randomBytes(32).toString('hex');
+  const today = new Date();
+  const tommorrowTimeStamp = today.setDate(today.getDate() + 1);
+  const expiryTommorrow = new Date(tommorrowTimeStamp);
 
-    await createAdmin(email, inviteToken, expiryTommorrow);
+  await createInvite(email, inviteToken, expiryTommorrow);
 
-    await sendMail(email, inviteToken);
+  await sendMail(email, inviteToken);
 
-    return res.status(201).json({
-      status: 201,
-      success: true,
-      message: 'invited successfully',
-    });
-  } catch (error) {
-    return res.status(400).json({
-      message: 'something went wrong',
-    });
-  }
+  return res.status(201).json({
+    status: 201,
+    success: true,
+    message: 'invited successfully',
+  });
 };
 
 const validateInviteToken = async (req, res) => {
@@ -72,7 +66,7 @@ const getAdmins = async (req, res) => {
 };
 
 const updateAdmin = async (req, res) => {
-  const adminId = req.body.adminId;
+  const adminId = req.params.adminId;
   const isActive = req.body.isActive;
 
   if (typeof isActive !== 'boolean') {
@@ -84,7 +78,7 @@ const updateAdmin = async (req, res) => {
   if (!user) {
     throw new ApiError(404, 'User not found!!');
   }
-  return res.status(201).json({
+  return res.status(200).json({
     success: true,
     message: `User ${isActive ? 'activated' : 'deactivated'} successfully.`,
     data: {

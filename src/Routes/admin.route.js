@@ -18,6 +18,6 @@ adminRouter.route('/invitations/:token').get(validateInviteToken);
 
 adminRouter.route('/').get(authentication, authorizationSuperAdmin, getAdmins);
 
-adminRouter.route('/:adminId').post(authentication, authorizationSuperAdmin, updateAdmin)
+adminRouter.route('/:adminId').patch(authentication, authorizationSuperAdmin, updateAdmin)
 
 export default adminRouter;

@@ -6,7 +6,7 @@ export const findAdminByToken = async (inviteToken) => {
   });
 };
 
-export const createAdmin = async (
+export const createInvite = async (
   email,
   inviteToken,
   expiresAt,

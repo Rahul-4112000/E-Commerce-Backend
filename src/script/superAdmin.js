@@ -1,9 +1,6 @@
-import mongoose from "mongoose";
 import { User } from "../Models/users.models";
 import "dotenv/config";
-import { DATABASE_NAME } from "../shared/constant";
 import { connectToDB } from "../DB";
-import { exitCode } from "node:process";
 
 connectToDB().then(async () => {
 

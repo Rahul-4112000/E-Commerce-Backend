@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import adminRouter from "./Routes/admin.route";
 import authRouter from "./Routes/auth.route";
 import { requestLogger } from "./middleware/requestLogger.js";
+import { errorHandler } from "./middleware/error.middleware.js";
 dotenv.config();
 
 const app = express();
@@ -19,15 +20,6 @@ app.use(requestLogger)
 app.use("/api/auth", authRouter);
 app.use("/api/admins", adminRouter)
 
-app.use((err, req, res, next) => {
-  const status = err.status || 500;
-  const message = err.message;
-
-  res.status(status).json({
-    success: false,
-    status,
-    message,
-  });
-});
+app.use(errorHandler);
 
 export default app;
