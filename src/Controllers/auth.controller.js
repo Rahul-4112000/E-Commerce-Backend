@@ -50,7 +50,7 @@ const loginUser = async (req, res) => {
 };
 
 const logout = async (req, res) => {
-  const userId = req.user._id;
+  const userId = req.user.id;
 
   const existingUser = await User.findById(userId).select('refreshToken');
 

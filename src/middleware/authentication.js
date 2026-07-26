@@ -1,5 +1,6 @@
 import Jwt from 'jsonwebtoken';
 import { User } from '../Models/users.models';
+import { mapAuthUserToClient } from '../mapper/auth.mapper';
 
 export const authentication = async (req, res, next) => {
   try {
@@ -23,7 +24,7 @@ export const authentication = async (req, res, next) => {
       });
     }
 
-    const user = await User.findById(decodeToken._id);
+    const user = await User.findById(decodeToken.id);
 
     if (!user) {
       return res.status(404).json({
@@ -32,7 +33,7 @@ export const authentication = async (req, res, next) => {
         success: false,
       });
     }
-    req.user = user;
+    req.user = mapAuthUserToClient(user);
 
     return next();
   } catch (error) {
