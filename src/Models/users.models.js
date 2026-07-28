@@ -27,6 +27,14 @@ const userSchema = new Schema(
       enum: ['admin', 'user', 'super_admin'],
       default: 'user',
     },
+    phone: {
+      type: String,
+      default: '',
+    },
+    avatar: {
+      type: String,
+      default: '',
+    },
     isActive: {
       type: Boolean,
       default: true,
