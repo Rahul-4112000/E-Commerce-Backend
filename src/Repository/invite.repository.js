@@ -1,6 +1,6 @@
 import { invite } from "../Models/invite.models";
 
-export const findAdminByToken = async (inviteToken) => {
+export const findInvitation = async (inviteToken) => {
   return await invite.findOne({
     inviteToken,
   });

@@ -11,3 +11,11 @@ export const mapAdminToClient = (admin) => {
 export const mapAdminListToClient = (adminList) => {
   return adminList.map(mapAdminToClient)
 }
+
+export const adminInviteMapper = (invitationObj) => {
+  return {
+    email: invitationObj.email,
+    status: invitationObj.status,
+    expiresAt: invitationObj.expiresAt
+  }
+}

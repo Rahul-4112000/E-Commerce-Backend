@@ -1,5 +1,4 @@
-import { ApiError } from "../utils/apiError";
-import { handleMongoError } from "../utils/handleMongoError";
+import { ApiError, handleMongoError } from "../utils/apiError";
 
 
 export const errorHandler = (err, req, res, next) => {

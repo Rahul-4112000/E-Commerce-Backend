@@ -6,39 +6,99 @@ import { User } from '../Models/users.models';
 import { ApiError } from '../utils/apiError';
 import { ROLE_TYPE } from '../shared/types';
 import { ApiResponse } from '../utils/apiResponse';
-import { mapAdminListToClient } from '../mapper/admin.mapper';
+import { adminInviteMapper, mapAdminListToClient } from '../mapper/admin.mapper';
 import { buildPaginationMetaData } from '../utils/util';
-import { COOKIE_OPTION } from '../shared/constant';
+import { COOKIE_OPTION, INVITE_STATUS } from '../shared/constant';
+import { invite } from '../Models/invite.models';
+import { mapAuthUserToClient } from '../mapper/auth.mapper';
 
 const inviteAdmin = async (req, res) => {
+  const inviteToken = crypto.randomBytes(32).toString('hex');
+  console.log(inviteToken, 'token')
+  const now = new Date();
+  const tomorrow = new Date();
+  const ONE_DAY = 1;
+  const tomorrowTimeStamp = tomorrow.setDate(tomorrow.getDate() + ONE_DAY);
+  const expiryTomorrow = new Date(tomorrowTimeStamp);
+
   const { email } = req.body;
 
-  const inviteToken = crypto.randomBytes(32).toString('hex');
-  const today = new Date();
-  const tommorrowTimeStamp = today.setDate(today.getDate() + 1);
-  const expiryTommorrow = new Date(tommorrowTimeStamp);
+  const invitation = await invite.findOne({ email: email });
 
-  await createInvite(email, inviteToken, expiryTommorrow);
+  if (invitation) {
+    if (invitation.status === INVITE_STATUS.ACCEPTED) {
+      throw new ApiError(409, "Invitation has already been accepted");
+    }
 
-  await sendMail(email, inviteToken);
+    if (invitation.status === INVITE_STATUS.SENT && invitation.expiresAt >= now) {
+      throw new ApiError(409, "A valid invitation has already been sent");
+    }
 
-  return res.status(201).json({
-    status: 201,
-    success: true,
-    message: 'invited successfully',
-  });
+    if (invitation.status === INVITE_STATUS.SENT && invitation.expiresAt <= now) {
+      const expiredTimestamp = new Date();
+      invitation.expiresAt = expiredTimestamp.setDate(expiredTimestamp.getDate() + ONE_DAY);
+      invitation.save({ validateBeforeSave: false });
+      await sendMail(email, inviteToken)
+      return res.status(200).json(new ApiResponse('Invitation resent successfully'))
+    }
+
+    if (invitation.status === INVITE_STATUS.FAILED) {
+      const expiredTimestamp = new Date();
+      invitation.expiresAt = expiredTimestamp.setDate(expiredTimestamp.getDate() + ONE_DAY);
+      invitation.status = INVITE_STATUS.SENT
+      invitation.save({ validateBeforeSave: false });
+      await sendMail(email, inviteToken)
+      return res.status(200).json(new ApiResponse('Invitation resent successfully'))
+    }
+  }
+
+  let invitationModel;
+  try {
+    invitationModel = await createInvite(email, inviteToken, expiryTomorrow);
+    await sendMail(email, inviteToken);
+    invitationModel.status = INVITE_STATUS.SENT;
+    invitationModel.save({ validateBeforeSave: false });
+    return res.status(201).json(new ApiResponse('Invitation sent successfully'))
+  } catch (error) {
+    invitationModel.status = INVITE_STATUS.FAILED;
+    invitationModel.save({ validateBeforeSave: false });
+    throw error;
+  }
 };
 
-const validateInviteToken = async (req, res) => {
-  const { inviteToken } = req.params;
+const validateInvitation = async (req, res) => {
+  const { token } = req.params;
 
-  const admin = await validateInvite(inviteToken);
+  const invitation = await validateInvite(token);
 
-  return res.status(200).json({
-    success: true,
-    message: 'token is valid',
-    user: admin,
+  return res.status(200).json(new ApiResponse('Invitation is valid', { invitation: adminInviteMapper(invitation) }));
+};
+
+const acceptAdminInvitation = async (req, res) => {
+  const { password, confirmPassword, inviteToken, name = '' } = req.body;
+
+  if (password !== confirmPassword) {
+    throw new ApiError(400, "password doesn't match");
+  }
+
+  const invitation = await validateInvite(inviteToken);
+
+  invitation.status = INVITE_STATUS.ACCEPTED;
+
+  await invitation.save({
+    validateBeforeSave: false,
   });
+
+  const user = await User.create({ name: name, email: invitation.email, password, role: ROLE_TYPE.ADMIN, isActive: true });
+
+  const accessToken = user.generateAccessToken();
+  const refreshToken = user.generateRefreshToken();
+
+  return res
+    .status(200)
+    .cookie('accessToken', accessToken, COOKIE_OPTION)
+    .cookie('refreshToken', refreshToken, COOKIE_OPTION)
+    .json(new ApiResponse('Admin registered successfully!', { user: mapAuthUserToClient(user) }));
 };
 
 const getAdmins = async (req, res) => {
@@ -60,7 +120,7 @@ const getAdmins = async (req, res) => {
     new ApiResponse(
       'Admins fetched successfully',
       mapAdminListToClient(adminList),
-      buildPaginationMetaData({ page, limit, itemCount })
+      buildPaginationMetaData({ page: parsedPage, limit: parsedLimit, itemCount })
     ),
   );
 };
@@ -88,31 +148,4 @@ const updateAdmin = async (req, res) => {
   });
 };
 
-const acceptAdminInvitation = async (req, res) => {
-  const { password, confirmPassword, inviteToken } = req.body;
-
-  if (password !== confirmPassword) {
-    throw new ApiError(400, "password doesn't match");
-  }
-
-  const admin = await validateInvite(inviteToken);
-
-  admin.isUsed = true;
-
-  await admin.save({
-    validateBeforeSave: false,
-  });
-
-  const user = await User.createUser({ email: admin.email || '', password, role: 'admin', isActive: true });
-
-  const accessToken = user.generateAccessToken();
-  const refreshToken = user.generateRefreshToken();
-
-  return res
-    .status(200)
-    .cookie('accessToken', accessToken, COOKIE_OPTION)
-    .cookie('refershToken', refreshToken, COOKIE_OPTION)
-    .json({ success: true, message: 'User Register sucessfully', user });
-};
-
-export { inviteAdmin, validateInviteToken, acceptAdminInvitation, getAdmins, updateAdmin };
+export { inviteAdmin, validateInvitation, acceptAdminInvitation, getAdmins, updateAdmin };

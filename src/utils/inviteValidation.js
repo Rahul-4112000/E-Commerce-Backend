@@ -1,4 +1,5 @@
-import { findAdminByToken } from "../Repository/invite.repository";
+import { findInvitation } from "../Repository/invite.repository";
+import { INVITE_STATUS } from "../shared/constant";
 import { ApiError } from "./apiError";
 
 export const validateInvite = async (inviteToken) => {
@@ -6,17 +7,19 @@ export const validateInvite = async (inviteToken) => {
     throw new ApiError(400, "token is required");
   }
 
-  const admin = await findAdminByToken(inviteToken);
+  const invitation = await findInvitation(inviteToken);
 
-  if (!admin) {
-    throw new ApiError(404, "invite is invalid");
+  if (!invitation) {
+    throw new ApiError(404, "Invalid invitation");
   }
 
-  const isExpired = admin.expiresAt <= new Date();
+  const now = new Date();
 
-  if (isExpired) {
-    throw new ApiError(401, "invite is expired");
+  const isExpired = invitation.expiresAt <= now;
+
+  if (invitation.status === INVITE_STATUS.ACCEPTED || invitation.status === INVITE_STATUS.FAILED || (invitation.status === INVITE_STATUS.SENT && isExpired)) {
+    throw new ApiError(410, "Invitation is no longer valid");
   }
 
-  return admin;
+  return invitation;
 };
