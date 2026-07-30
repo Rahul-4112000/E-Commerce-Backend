@@ -7,6 +7,7 @@ import authRouter from "./Routes/auth.route";
 import userRouter from "./Routes/user.route";
 import { requestLogger } from "./middleware/requestLogger.js";
 import { errorHandler } from "./middleware/error.middleware.js";
+
 dotenv.config();
 
 const app = express();

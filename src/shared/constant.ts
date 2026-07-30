@@ -11,3 +11,8 @@ export const INVITE_STATUS = {
   FAILED: 'failed',
   SENT: 'sent',
 };
+
+export const AVATAR_UPLOAD_CONFIG = {
+  maxSize: 2 * 1024 * 1024,
+  allowedTypes: ['image/jpeg', 'image/png', 'image/webp'],
+};

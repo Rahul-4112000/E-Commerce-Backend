@@ -35,6 +35,9 @@ const userSchema = new Schema(
       type: String,
       default: '',
     },
+    avatarPublicId: {
+      type: String,
+    },
     isActive: {
       type: Boolean,
       default: true,
