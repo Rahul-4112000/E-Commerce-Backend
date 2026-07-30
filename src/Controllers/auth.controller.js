@@ -2,7 +2,6 @@ import { ApiError } from '../utils/apiError';
 import { User } from '../Models/users.models';
 import { logoutUser } from '../Repository/user.repository';
 import { COOKIE_OPTION } from '../shared/constant';
-import { mapAuthUserToClient } from '../mapper/auth.mapper';
 import { ApiResponse } from '../utils/apiResponse';
 
 const loginUser = async (req, res) => {
@@ -37,6 +36,7 @@ const loginUser = async (req, res) => {
   });
 
   const { password: _, refreshToken: __, ...userWithoutSensitiveField } = user.toObject();
+
   return res
     .status(200)
     .cookie('accessToken', accessToken, COOKIE_OPTION)
@@ -48,6 +48,16 @@ const loginUser = async (req, res) => {
       user: userWithoutSensitiveField,
     });
 };
+
+const register = async (req, res) => {
+  const { name, email, password } = req.body;
+
+  const user = await User.create({ name, email, password });
+
+  const accessToken = user.generateAccessToken();
+
+  return res.status(201).cookie('accessToken', accessToken, COOKIE_OPTION).json(new ApiResponse('User registered successfully'));
+}
 
 const logout = async (req, res) => {
   const userId = req.user.id;
@@ -82,10 +92,4 @@ const logout = async (req, res) => {
   });
 }
 
-const getUserProfile = (req, res) => {
-  const user = mapAuthUserToClient(req.user);
-
-  return res.status(200).json(new ApiResponse('fetched user profile successfully', { user }))
-}
-
-export { loginUser, logout, getUserProfile };
+export { loginUser, logout, register };
